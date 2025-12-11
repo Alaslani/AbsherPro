@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8faf9;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --primary: #1b8e5a;
+  --primary-strong: #156b45;
+  --secondary: #6b4fa0;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-secondary: var(--secondary);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-cairo);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), var(--font-cairo), system-ui, -apple-system,
+    sans-serif;
+}
+
+input,
+textarea,
+button,
+select {
+  font: inherit;
+}
+
+.btn-primary {
+  @apply w-full rounded-xl bg-gradient-to-r from-[#1B8E5A] to-[#156B45] text-white font-semibold shadow-sm transition-transform duration-150 hover:scale-[0.99] active:scale-95;
+}
+
+[data-big-buttons="true"] button,
+[data-big-buttons="true"] a {
+  @apply min-h-[56px] text-base;
+}
+
+[data-high-contrast="true"] .card,
+.card {
+  background: var(--card);
+  @apply rounded-2xl border border-[var(--border)] shadow-sm;
+}
+
+input,
+textarea,
+select {
+  @apply w-full min-h-[56px] rounded-xl border border-[var(--border)] bg-white px-4 py-3 focus:border-[#1B8E5A] focus:outline-none focus:ring-2 focus:ring-[#1B8E5A]/30 transition;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
