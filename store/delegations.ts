@@ -1,5 +1,4 @@
 import {
-  CURRENT_DELEGATE_ID,
   CURRENT_GRANTOR_ID,
   Delegation,
   DelegationStatus,
@@ -119,9 +118,10 @@ export const useDelegationsStore = create<DelegationsState>((set, get) => ({
       (delegation) =>
         delegation.grantorId === grantorId && !delegation.isDeletedForGrantor
     ),
-  getDelegateDelegations: (delegateId = CURRENT_DELEGATE_ID) =>
-    get().delegations.filter(
-      (delegation) =>
-        delegation.delegateId === delegateId && !delegation.isDeletedForDelegate
-    ),
+  getDelegateDelegations: (delegateId?: string) =>
+    get().delegations.filter((delegation) => {
+      if (delegation.isDeletedForDelegate || delegation.isArchivedForDelegate) return false;
+      if (delegateId) return delegation.delegateId === delegateId;
+      return true;
+    }),
 }));

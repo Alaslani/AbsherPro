@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { useAssistantStore } from "@/store/assistant";
-import { Mic } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { PropsWithChildren } from "react";
 
 type Props = PropsWithChildren<{
@@ -30,14 +30,14 @@ const AiAssistantButton = ({ size = "lg", className, floating, children }: Props
         )}
         aria-label="AI assistant"
       >
-        {children ?? <Mic className="h-5 w-5" />}
+        {children ?? <MessageCircle className="h-5 w-5" />}
       </button>
     );
   }
 
   return (
     <button onClick={open} className={cn(base, "flex items-center justify-center")} aria-label="AI assistant">
-      {children ?? <Mic className="h-5 w-5" />}
+      {children ?? <MessageCircle className="h-5 w-5" />}
     </button>
   );
 };

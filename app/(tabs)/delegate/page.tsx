@@ -3,7 +3,6 @@
 import DelegationCard from "@/components/DelegationCard";
 import { t } from "@/lib/i18n";
 import { cn, durationLabel, formatDate, platformLabel } from "@/lib/utils";
-import { CURRENT_DELEGATE_ID } from "@/data/seedDelegations";
 import { useDelegationsStore } from "@/store/delegations";
 import { useSettingsStore } from "@/store/settings";
 import {
@@ -16,36 +15,34 @@ import {
   User2,
   X,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import StatusBadge from "@/components/StatusBadge";
 
 export default function DelegatePage() {
   const language = useSettingsStore((state) => state.language);
   const { updateDelegation } = useDelegationsStore();
   const delegationsState = useDelegationsStore((state) => state.delegations);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const lastFocusedRef = useRef<HTMLElement | null>(null);
   const delegations = useMemo(
     () =>
       delegationsState.filter(
-        (item) =>
-          item.delegateId === CURRENT_DELEGATE_ID &&
-          !item.isArchivedForDelegate &&
-          !item.isDeletedForDelegate
+        (item) => !item.isArchivedForDelegate && !item.isDeletedForDelegate
       ),
     [delegationsState]
   );
 
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [ackMap, setAckMap] = useState<Record<string, boolean>>({});
 
   const openDetails = (id: string) => {
     setSelectedId(id);
-    setAckMap((prev) => ({ ...prev, [id]: prev[id] ?? false }));
   };
 
-  const closeDetails = () => setSelectedId(null);
+  const closeDetails = () => {
+    setSelectedId(null);
+  };
 
   const accept = (id: string) => {
-    if (!ackMap[id]) return;
     updateDelegation(id, {
       delegateAcceptedTerms: true,
       delegateStatus: "accepted",
@@ -67,8 +64,41 @@ export default function DelegatePage() {
   const remove = (id: string) => updateDelegation(id, { isDeletedForDelegate: true });
 
   const selected = delegations.find((d) => d.id === selectedId) ?? null;
-  const checked = selected ? ackMap[selected.id] ?? false : false;
   const hideTerms = selected?.delegateStatus === "accepted" || selected?.delegateStatus === "rejected";
+  const titleId = selected ? `delegation-${selected.id}-title` : undefined;
+  const termsId = selected ? `delegation-${selected.id}-terms` : undefined;
+
+  useEffect(() => {
+    if (selected && closeButtonRef.current) {
+      lastFocusedRef.current = document.activeElement as HTMLElement | null;
+      closeButtonRef.current.focus();
+    }
+
+    if (!selected && lastFocusedRef.current) {
+      lastFocusedRef.current.focus();
+      lastFocusedRef.current = null;
+    }
+  }, [selected]);
+
+  const trapFocus = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "Tab") return;
+    const dialog = event.currentTarget;
+    const focusable = dialog.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey) {
+      if (document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      }
+    } else if (document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -97,7 +127,14 @@ export default function DelegatePage() {
 
       {selected && !hideTerms && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 px-2 pb-20 sm:items-center sm:pb-0">
-          <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl sm:max-h-[80vh] sm:overflow-hidden">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            aria-describedby={termsId}
+            className="w-full max-w-md rounded-3xl bg-white shadow-2xl sm:max-h-[80vh] sm:overflow-hidden"
+            onKeyDown={trapFocus}
+          >
             <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-[#1B8E5A]" />
@@ -105,7 +142,7 @@ export default function DelegatePage() {
                   <p className="text-xs text-slate-500">
                     {platformLabel(selected.platform, language)}
                   </p>
-                  <p className="text-sm font-semibold text-slate-900">
+                  <p id={titleId} className="text-sm font-semibold text-slate-900">
                     {language === "ar" ? selected.serviceNameAr : selected.serviceNameEn}
                   </p>
                 </div>
@@ -113,6 +150,7 @@ export default function DelegatePage() {
               <StatusBadge status={selected.status} language={language} />
               <button
                 onClick={closeDetails}
+                ref={closeButtonRef}
                 className="rounded-full border border-[var(--border)] p-2 text-slate-600"
                 aria-label="Close"
               >
@@ -144,38 +182,32 @@ export default function DelegatePage() {
               <div className="rounded-2xl border border-[var(--border)] bg-slate-50 p-3">
                 <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-800">
                   <FileText className="h-4 w-4 text-[#1B8E5A]" />
-                  {language === "ar" ? "الشروط والأحكام" : "Terms & Conditions"}
+                  {t("termsHeading", language)}
                 </div>
-                <div className="max-h-32 overflow-y-auto rounded-xl bg-white px-3 py-3 text-xs leading-6 text-slate-700">
-                  {language === "ar"
-                    ? "نص تجريبي يمثل الشروط والأحكام للتفويض. الرجاء مراجعة المدة والصلاحيات قبل القبول."
-                    : "Dummy text representing the delegation terms. Please review the scope, duration, and obligations before accepting."}
+                <div className="max-h-40 space-y-2 overflow-y-auto rounded-xl bg-white px-3 py-3 text-xs leading-6 text-slate-700">
+                  <p>1) {t("termsBullet1", language)}</p>
+                  <p>2) {t("termsBullet2", language)}</p>
+                  <p>3) {t("termsBullet3", language)}</p>
                 </div>
-                <label className="mt-3 flex items-center gap-3 rounded-xl bg-white px-2 py-2 text-sm font-semibold text-slate-800">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(e) =>
-                      setAckMap((prev) => ({ ...prev, [selected.id]: e.target.checked }))
-                    }
-                    className="h-5 w-5"
-                  />
-                  <span className="leading-5">
-                    {language === "ar"
-                      ? "أوافق على الشروط والأحكام الخاصة بهذا التفويض."
-                      : "I agree to the terms and conditions for this delegation."}
-                  </span>
-                </label>
+                <div
+                  id={termsId}
+                  dir={language === "ar" ? "rtl" : "ltr"}
+                  className={cn(
+                    "mt-3 rounded-xl bg-white px-3 py-3",
+                    language === "ar" ? "text-right" : "text-left"
+                  )}
+                >
+                  <p className="text-sm leading-relaxed">{t("termsNotice", language)}</p>
+                </div>
               </div>
             </div>
 
             <div className="sticky bottom-0 grid grid-cols-2 gap-2 border-t border-[var(--border)] bg-white px-4 py-3">
               <button
                 onClick={() => accept(selected.id)}
-                disabled={!checked}
                 className={cn(
-                  "flex items-center justify-center gap-2 rounded-xl bg-[#1B8E5A] px-3 py-3 text-sm font-semibold text-white shadow-sm",
-                  !checked && "opacity-60"
+                  "flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-semibold text-white shadow-sm",
+                  "bg-[#1B8E5A]"
                 )}
               >
                 <CheckCircle2 className="h-5 w-5" /> {t("accept", language)}

@@ -2,8 +2,8 @@
 
 import { t } from "@/lib/i18n";
 import { useSettingsStore } from "@/store/settings";
-import { Contrast, Languages, Type, Zap } from "lucide-react";
-import React from "react";
+import { Contrast, Languages, MapPin, Type, UserCheck, Zap, ArrowLeft } from "lucide-react";
+import React, { useState } from "react";
 
 export default function AccessibilityPage() {
   const language = useSettingsStore((state) => state.language);
@@ -14,6 +14,9 @@ export default function AccessibilityPage() {
   const largeText = useSettingsStore((state) => state.largeText);
   const highContrast = useSettingsStore((state) => state.highContrast);
   const bigButtons = useSettingsStore((state) => state.bigButtons);
+  const [showAgentFlow, setShowAgentFlow] = useState(false);
+  const [agentRequested, setAgentRequested] = useState(false);
+  const [locationSaved, setLocationSaved] = useState(false);
 
   return (
     <div className="space-y-3">
@@ -30,6 +33,96 @@ export default function AccessibilityPage() {
       </div>
 
       <div className="card space-y-3 p-4">
+        <button
+          onClick={() => {
+            setShowAgentFlow(true);
+            setAgentRequested(false);
+            setLocationSaved(false);
+          }}
+          className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-[#EA580C] to-[#f18f3c] px-4 py-3 text-white shadow hover:brightness-95"
+        >
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15">
+              <ArrowLeft className="h-4 w-4" />
+            </span>
+            <div className="text-left">
+              <p className="text-sm font-semibold">{t("trustedAgentTitle", language)}</p>
+              <p className="text-xs text-white/80">{t("trustedAgentDesc", language)}</p>
+            </div>
+          </div>
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20">
+            <UserCheck className="h-6 w-6" />
+          </div>
+        </button>
+
+        {showAgentFlow && (
+          <div className="rounded-2xl border border-[var(--border)] bg-white px-4 py-4 shadow-sm">
+            <div className="flex items-center justify-between rounded-2xl bg-[#1B8E5A]/10 px-3 py-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#1B8E5A] shadow-inner">
+                  <UserCheck className="h-6 w-6" />
+                </div>
+                <div>
+                  <h2 className="text-base font-semibold text-slate-900">{t("trustedAgentTitle", language)}</h2>
+                  <p className="text-xs text-slate-600">{t("trustedAgentDesc", language)}</p>
+                </div>
+              </div>
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#B45309] shadow-sm">
+                {t("trustedAgentCost", language)}
+              </span>
+            </div>
+
+            <div className="mt-3 rounded-xl border border-dashed border-[var(--border)] bg-slate-50 px-3 py-3 text-left">
+              <div className="flex items-start gap-2">
+                <MapPin className="mt-0.5 h-4 w-4 text-[#1B8E5A]" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-slate-800">{t("trustedAgentLocationTitle", language)}</p>
+                  <button
+                    onClick={() => setLocationSaved(true)}
+                    className="mt-2 inline-flex items-center gap-2 rounded-lg bg-[#1B8E5A] px-3 py-2 text-xs font-semibold text-white shadow-sm hover:brightness-95"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    {t("trustedAgentLocationBtn", language)}
+                  </button>
+                  {locationSaved && (
+                    <p className="mt-2 text-xs font-semibold text-emerald-700">
+                      {t("trustedAgentLocationSaved", language)}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 flex flex-col gap-2">
+              <button
+                onClick={() => setAgentRequested(true)}
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1B8E5A] px-4 py-3 text-sm font-semibold text-white shadow-sm hover:brightness-95 disabled:opacity-60"
+                disabled={!locationSaved}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                {t("trustedAgentConfirm", language)}
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowAgentFlow(false);
+                  setAgentRequested(false);
+                  setLocationSaved(false);
+                }}
+                className="w-full rounded-2xl border border-[var(--border)] px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                {t("trustedAgentBack", language)}
+              </button>
+            </div>
+
+            {agentRequested && (
+              <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
+                {t("trustedAgentDone", language)}
+              </p>
+            )}
+          </div>
+        )}
+
         <ToggleRow
           active={language === "ar"}
           onClick={() => setLanguage(language === "ar" ? "en" : "ar")}

@@ -5,7 +5,7 @@ import { t } from "@/lib/i18n";
 import { CURRENT_GRANTOR_ID } from "@/data/seedDelegations";
 import { useDelegationsStore } from "@/store/delegations";
 import { useSettingsStore } from "@/store/settings";
-import { CalendarClock, FileText, ShieldCheck, User2, Phone } from "lucide-react";
+import { CalendarClock, FileText, ShieldCheck, User2, Phone, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { durationLabel, formatDate, platformLabel } from "@/lib/utils";
 import StatusBadge from "@/components/StatusBadge";
@@ -99,8 +99,14 @@ export default function GrantorPage() {
       )}
 
       {selected && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 px-2 pb-20 sm:items-center sm:pb-0">
-          <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl sm:max-h-[80vh] sm:overflow-hidden">
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 px-2 pb-20 sm:items-center sm:pb-0"
+          onClick={() => setSelectedId(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl bg-white shadow-2xl sm:max-h-[80vh] sm:overflow-hidden"
+            onClick={(event) => event.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-[#1B8E5A]" />
@@ -113,7 +119,16 @@ export default function GrantorPage() {
                   </p>
                 </div>
               </div>
-              <StatusBadge status={selected.status} language={language} />
+              <div className="flex items-center gap-2">
+                <StatusBadge status={selected.status} language={language} />
+                <button
+                  aria-label={language === "ar" ? "إغلاق" : "Close"}
+                  onClick={() => setSelectedId(null)}
+                  className="rounded-full p-1 text-slate-500 hover:bg-slate-100"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
             <div className="space-y-3 px-4 py-3 text-sm text-slate-700">

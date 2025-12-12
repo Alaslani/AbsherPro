@@ -40,8 +40,16 @@ export type TranslationKey =
   | "reject"
   | "termsLabel"
   | "aiAssistant"
+  | "aiIntro"
+  | "aiTagline"
   | "aiPlaceholder"
   | "aiListening"
+  | "aiListeningSub"
+  | "aiChipLicense"
+  | "aiChipNajiz"
+  | "aiChip24h"
+  | "aiPlatformAuto"
+  | "aiBackendNote"
   | "analyticsTitle"
   | "totalDelegations"
   | "accepted"
@@ -52,12 +60,27 @@ export type TranslationKey =
   | "largeText"
   | "highContrast"
   | "bigButtons"
+  | "trustedAgentTitle"
+  | "trustedAgentDesc"
+  | "trustedAgentStart"
+  | "trustedAgentConfirm"
+  | "trustedAgentBack"
+  | "trustedAgentDone"
+  | "trustedAgentLocationTitle"
+  | "trustedAgentLocationBtn"
+  | "trustedAgentLocationSaved"
+  | "trustedAgentCost"
   | "delegateNeeded"
   | "serviceNeeded"
   | "durationNeeded"
   | "createSuccess"
   | "viewDetails"
-  | "pendingTerms";
+  | "pendingTerms"
+  | "termsHeading"
+  | "termsBullet1"
+  | "termsBullet2"
+  | "termsBullet3"
+  | "termsNotice";
 
 const dictionary: Record<TranslationKey, { ar: string; en: string }> = {
   appTitle: { ar: "أبشر برو للتفويض", en: "Absher Delegation Pro" },
@@ -96,7 +119,7 @@ const dictionary: Record<TranslationKey, { ar: string; en: string }> = {
   statusCompleted: { ar: "مكتمل", en: "Completed" },
   statusRejected: { ar: "مرفوض", en: "Rejected" },
   statusExpired: { ar: "منتهي", en: "Expired" },
-  grantorDelegations: { ar: "تفويضات المانح", en: "Grantor delegations" },
+  grantorDelegations: { ar: "تفويضاتي", en: "My Delegations" },
   delegateDelegations: { ar: "تفويضاتي كمفوَّض", en: "Delegate view" },
   filters: { ar: "التصفيات", en: "Filters" },
   archive: { ar: "أرشفة", en: "Archive" },
@@ -108,8 +131,28 @@ const dictionary: Record<TranslationKey, { ar: string; en: string }> = {
     en: "I agree to the terms and conditions for this delegation",
   },
   aiAssistant: { ar: "مساعد ذكي", en: "AI Assistant" },
+  aiIntro: {
+    ar: "أهلاً! أخبرني عن خدمة التفويض المطلوبة وسأجهزها لك.",
+    en: "Hi! Tell me which delegation you need and I'll set it up for you.",
+  },
+  aiTagline: { ar: "تجربة صوتية وكتابية", en: "Voice + chat experience" },
   aiPlaceholder: { ar: "اطلب التفويض صوتيًا أو كتابيًا...", en: "Ask the assistant about a delegation..." },
   aiListening: { ar: "يستمع الآن...", en: "Listening..." },
+  aiListeningSub: {
+    ar: "استمعنا لطلبك، يمكنك المتابعة كتابة أو بالصوت.",
+    en: "We heard your request; keep typing or continue speaking.",
+  },
+  aiChipLicense: { ar: "تفويض استلام رخصة القيادة", en: "Driving license pickup" },
+  aiChipNajiz: { ar: "تفويض خدمة في ناجز", en: "Delegation for Najiz service" },
+  aiChip24h: { ar: "تفويض لمدة 24 ساعة", en: "24-hour delegation" },
+  aiPlatformAuto: {
+    ar: "اختيرت تلقائياً بناء على النص",
+    en: "Auto-selected from your request",
+  },
+  aiBackendNote: {
+    ar: "سيتم ربط المساعد بنماذج الذكاء الاصطناعي في الإنتاج.",
+    en: "The assistant will connect to an AI backend in production.",
+  },
   analyticsTitle: { ar: "لوحة التحليلات", en: "Analytics" },
   totalDelegations: { ar: "إجمالي التفويضات", en: "Total delegations" },
   accepted: { ar: "مقبول", en: "Accepted" },
@@ -120,12 +163,45 @@ const dictionary: Record<TranslationKey, { ar: string; en: string }> = {
   largeText: { ar: "تكبير النص", en: "Large text" },
   highContrast: { ar: "تباين عالٍ", en: "High contrast" },
   bigButtons: { ar: "أزرار أكبر", en: "Bigger buttons" },
+  trustedAgentTitle: { ar: "طلب مندوب موثّق", en: "Request a verified agent" },
+  trustedAgentDesc: {
+    ar: "سيتم إرسال مندوب موثّق لمساعدتك في منزلك.",
+    en: "We’ll dispatch a verified agent to assist you at home.",
+  },
+  trustedAgentStart: { ar: "طلب مندوب موثّق", en: "Request agent" },
+  trustedAgentConfirm: { ar: "تأكيد الطلب", en: "Confirm request" },
+  trustedAgentBack: { ar: "رجوع", en: "Back" },
+  trustedAgentDone: { ar: "تم إرسال الطلب وسيتواصل معك المندوب قريباً.", en: "Request sent. An agent will contact you shortly." },
+  trustedAgentLocationTitle: {
+    ar: "شارك موقعك لإرسال أقرب مندوب.",
+    en: "Share your location so we can send the nearest agent.",
+  },
+  trustedAgentLocationBtn: { ar: "استخدام موقعي الحالي", en: "Use my current location" },
+  trustedAgentLocationSaved: { ar: "تم حفظ موقعك الحالي.", en: "Your current location has been captured." },
+  trustedAgentCost: { ar: "تكلفة الخدمة: ٢٠٠ ﷼", en: "Service cost: 200 ﷼" },
   delegateNeeded: { ar: "أضف بيانات المفوَّض لإكمال الطلب", en: "Add delegate details to proceed." },
   serviceNeeded: { ar: "اختر الخدمة المطلوبة", en: "Choose a service." },
   durationNeeded: { ar: "حدد مدة التفويض", en: "Select a duration." },
   createSuccess: { ar: "تم إنشاء التفويض بنجاح", en: "Delegation created successfully" },
   viewDetails: { ar: "عرض التفاصيل", en: "View details" },
   pendingTerms: { ar: "بانتظار قبول الشروط", en: "Awaiting terms acceptance" },
+  termsHeading: { ar: "الشروط والأحكام", en: "Terms & Conditions" },
+  termsBullet1: {
+    ar: "الالتزام باستخدام بيانات التفويض للغرض المحدد فقط وأثناء المدة المصرّح بها.",
+    en: "Use this delegation solely for the stated purpose within the authorized duration.",
+  },
+  termsBullet2: {
+    ar: "حمل الهوية وإبرازها عند الطلب، مع الحفاظ على سرية أي مستندات أو صلاحيات تم منحها.",
+    en: "Carry your ID, present it when requested, and keep all granted permissions confidential.",
+  },
+  termsBullet3: {
+    ar: "لا يجوز تفويض طرف ثالث أو إجراء تعديلات دون موافقة المانح.",
+    en: "Do not sub-delegate or modify this authorization without grantor consent.",
+  },
+  termsNotice: {
+    ar: "بالمتابعة، أنت توافق على الشروط والأحكام الخاصة بهذا التفويض.",
+    en: "By proceeding, you agree to the terms and conditions of this delegation.",
+  },
 };
 
 export const t = (key: TranslationKey, language: Language): string => {

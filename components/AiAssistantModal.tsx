@@ -14,18 +14,12 @@ import {
   Send,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useId } from "react";
 
 interface ChatMessage {
   role: "user" | "assistant";
   text: string;
 }
-
-const suggestionChips = [
-  "تفويض استلام رخصة القيادة",
-  "تفويض خدمة في ناجز",
-  "تفويض لمدة 24 ساعة",
-];
 
 const detectIntent = (text: string) => {
   const lower = text.toLowerCase();
@@ -36,19 +30,61 @@ const detectIntent = (text: string) => {
   let platform: "absher" | "najiz" | undefined;
   let durationType: "24h" | "7d" | "custom" | undefined;
 
-  if (normalized.includes("رخصة")) {
-    serviceId = "drv-license";
+  if (normalized.includes("أبشر") || normalized.includes("absher")) {
     platform = "absher";
   }
-  if (normalized.includes("ناجز")) {
+  if (normalized.includes("ناجز") || normalized.includes("najiz")) {
+    platform = "najiz";
+  }
+
+  const matchedService = services.find((srv) => {
+    const names = [
+      srv.nameAr,
+      srv.nameEn.toLowerCase(),
+    ];
+    return names.some((name) =>
+      normalized.includes(hasArabic ? name : name.toLowerCase())
+    );
+  });
+
+  if (matchedService) {
+    serviceId = matchedService.id;
+    if (matchedService.platform === "absher" || matchedService.platform === "najiz") {
+      platform = matchedService.platform;
+    }
+    if (matchedService.defaultDuration) durationType = matchedService.defaultDuration;
+  }
+
+  if (normalized.includes("رخصة") || normalized.includes("license")) {
+    serviceId = serviceId ?? "drv-license";
+    platform = platform ?? "absher";
+  }
+  if (normalized.includes("جواز") || normalized.includes("passport")) {
+    serviceId = serviceId ?? "passport-delivery";
+    platform = platform ?? "absher";
+  }
+  if (normalized.includes("ناجز") || normalized.includes("najiz")) {
     platform = "najiz";
     serviceId = serviceId ?? "document-drop";
   }
-  if (normalized.includes("24") || normalized.includes("ساعة")) {
+  if (
+    normalized.includes("24") ||
+    normalized.includes("٢٤") ||
+    normalized.includes("ساعة") ||
+    normalized.includes("hour")
+  ) {
     durationType = "24h";
   }
-  if (normalized.includes("7") || normalized.includes("أسبوع")) {
+  if (
+    normalized.includes("7") ||
+    normalized.includes("٧") ||
+    normalized.includes("أسبوع") ||
+    normalized.includes("week")
+  ) {
     durationType = "7d";
+  }
+  if (normalized.includes("مخصص") || normalized.includes("custom")) {
+    durationType = "custom";
   }
 
   return { serviceId, platform, durationType };
@@ -58,11 +94,9 @@ const AiAssistantModal = () => {
   const { isOpen, close } = useAssistantStore();
   const { createDelegation } = useDelegationsStore();
   const language = useSettingsStore((state) => state.language);
-
-  const introText =
-    language === "ar"
-      ? "أهلاً! أخبرني عن خدمة التفويض المطلوبة وسأجهّزها لك."
-      : "Hi! Tell me which delegation you need and I will draft it for you.";
+  const introText = t("aiIntro", language);
+  const headingId = useId();
+  const descriptionId = useId();
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", text: introText },
@@ -76,6 +110,14 @@ const AiAssistantModal = () => {
   const [platform, setPlatform] = useState<"absher" | "najiz">("absher");
   const [successId, setSuccessId] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
+  const normalizeDigits = (value: string) => {
+    const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
+    const englishDigits = "0123456789";
+    return value
+      .replace(/[٠-٩]/g, (d) => englishDigits[arabicDigits.indexOf(d)])
+      .replace(/\D/g, "")
+      .slice(0, 10);
+  };
 
   useEffect(() => {
     if (endRef.current) {
@@ -91,11 +133,21 @@ const AiAssistantModal = () => {
   }, [language, isOpen, introText]);
 
   const serviceOptions = useMemo(() => services, []);
+  const suggestionChips = useMemo(
+    () => [
+      t("aiChipLicense", language),
+      t("aiChipNajiz", language),
+      t("aiChip24h", language),
+    ],
+    [language]
+  );
 
   const syncPlatformWithService = (id: string) => {
     const found = services.find((srv) => srv.id === id);
     if (found) {
-      setPlatform(found.platform);
+      if (found.platform === "absher" || found.platform === "najiz") {
+        setPlatform(found.platform);
+      }
       if (found.defaultDuration) setDurationType(found.defaultDuration);
     }
   };
@@ -168,7 +220,7 @@ const AiAssistantModal = () => {
 
   const handleCreate = () => {
     const selectedService = services.find((srv) => srv.id === serviceId);
-    if (!selectedService || !delegateId || !delegateName) return;
+    if (!selectedService || delegateId.length !== 10 || !delegateName) return;
 
     const created = createDelegation({
       serviceId: selectedService.id,
@@ -193,7 +245,13 @@ const AiAssistantModal = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/30 backdrop-blur-sm md:items-start md:justify-end">
-      <div className="h-[92vh] w-full max-w-md rounded-t-3xl bg-white shadow-2xl md:mr-4 md:mt-6 md:h-[90vh] md:rounded-3xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={headingId}
+        aria-describedby={descriptionId}
+        className="h-[92vh] w-full max-w-md rounded-t-3xl bg-white shadow-2xl md:mr-4 md:mt-6 md:h-[90vh] md:rounded-3xl"
+      >
         <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
           <div className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-r from-[#1B8E5A] to-[#156B45] text-white shadow">
@@ -201,10 +259,8 @@ const AiAssistantModal = () => {
             </div>
             <div>
               <p className="text-xs text-slate-500">{t("aiAssistant", language)}</p>
-              <p className="text-sm font-semibold text-slate-900">
-                {language === "ar"
-                  ? "تجربة صوتية وكتابية"
-                  : "Voice + chat experience"}
+              <p id={headingId} className="text-sm font-semibold text-slate-900">
+                {t("aiTagline", language)}
               </p>
             </div>
           </div>
@@ -224,10 +280,8 @@ const AiAssistantModal = () => {
             </div>
             <div>
               <p className="text-sm font-semibold">{t("aiListening", language)}</p>
-              <p className="text-xs text-white/80">
-                {language === "ar"
-                  ? "استمعنا لطلبك، يمكنك المتابعة كتابة أو بالصوت"
-                  : "We heard your request, continue typing or keep speaking."}
+              <p id={descriptionId} className="text-xs text-white/80">
+                {t("aiListeningSub", language)}
               </p>
             </div>
           </div>
@@ -246,6 +300,9 @@ const AiAssistantModal = () => {
         </div>
 
         <div className="mt-3 h-56 overflow-y-auto px-4">
+          <div className="sr-only" aria-live="polite">
+            {messages[messages.length - 1]?.text}
+          </div>
           {messages.map((message, idx) => (
             <div
               key={idx}
@@ -302,18 +359,21 @@ const AiAssistantModal = () => {
               placeholder={t("delegateName", language)}
               value={delegateName}
               onChange={(e) => setDelegateName(e.target.value)}
+              className="rounded-xl border border-[var(--border)] bg-white px-3 py-3 text-sm"
             />
             <input
               placeholder={t("delegateId", language)}
               value={delegateId}
-              onChange={(e) => setDelegateId(e.target.value)}
+              onChange={(e) => setDelegateId(normalizeDigits(e.target.value))}
+              className="rounded-xl border border-[var(--border)] bg-white px-3 py-3 text-sm"
+              inputMode="numeric"
             />
           </div>
           <div className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-slate-50 px-3 py-2 text-sm">
             <div>
               <p className="text-slate-700">{platform === "absher" ? t("platformAbsher", language) : t("platformNajiz", language)}</p>
               <p className="text-xs text-slate-500">
-                {language === "ar" ? "اختيرت تلقائياً بناء على النص" : "Selected based on your request"}
+                {t("aiPlatformAuto", language)}
               </p>
             </div>
             <BadgeCheck className="h-5 w-5 text-[#1B8E5A]" />
@@ -347,10 +407,10 @@ const AiAssistantModal = () => {
 
           <button
             onClick={handleCreate}
-            disabled={!delegateId || !delegateName || !serviceId}
+            disabled={delegateId.length !== 10 || !delegateName || !serviceId}
             className={cn(
               "btn-primary mt-1 flex items-center justify-center gap-2",
-              (!delegateId || !delegateName || !serviceId) && "opacity-60"
+              (delegateId.length !== 10 || !delegateName || !serviceId) && "opacity-60"
             )}
           >
             <CheckCircle2 className="h-5 w-5" />
@@ -359,9 +419,7 @@ const AiAssistantModal = () => {
 
           <p className="text-[11px] text-slate-500">
             {/* Placeholder for real AI integration */}
-            {language === "ar"
-              ? "سيتم ربط المساعد بنماذج الذكاء الاصطناعي في الإنتاج."
-              : "In production, this would connect to an AI backend for NLU."}
+            {t("aiBackendNote", language)}
           </p>
         </div>
       </div>

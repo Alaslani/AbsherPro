@@ -4,7 +4,7 @@ import LanguageToggle from "@/components/LanguageToggle";
 import { t } from "@/lib/i18n";
 import { useSettingsStore } from "@/store/settings";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowLeft, Mic, Sparkles } from "lucide-react";
+import { ArrowLeft, MessageCircle, Sparkles } from "lucide-react";
 import AiAssistantButton from "./AiAssistantButton";
 
 const Header = () => {
@@ -44,7 +44,7 @@ const Header = () => {
         <div className="flex items-center gap-2">
           <LanguageToggle />
           <AiAssistantButton size="sm">
-            <Mic className="h-4 w-4" />
+            <MessageCircle className="h-4 w-4" />
           </AiAssistantButton>
         </div>
       </div>

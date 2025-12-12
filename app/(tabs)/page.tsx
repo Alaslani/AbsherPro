@@ -56,6 +56,15 @@ export default function HomePage() {
   const [success, setSuccess] = useState<string | null>(null);
   const flowRef = useRef<HTMLDivElement | null>(null);
 
+  const normalizeDigits = (value: string) => {
+    const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
+    const englishDigits = "0123456789";
+    return value
+      .replace(/[٠-٩]/g, (d) => englishDigits[arabicDigits.indexOf(d)])
+      .replace(/\D/g, "")
+      .slice(0, 10);
+  };
+
   const startDateObj = useMemo(() => new Date(startDate), [startDate]);
   const autoEndDate = useMemo(() => {
     if (durationType === "24h") {
@@ -108,7 +117,7 @@ export default function HomePage() {
   };
 
   const handleConfirm = () => {
-    if (!selectedService || !delegateName || !delegateId || !delegatePhone) return;
+    if (!selectedService || !delegateName || delegateId.length !== 10 || !delegatePhone) return;
     const created = createDelegation({
       serviceId: selectedService.id,
       serviceNameAr: selectedService.nameAr,
@@ -323,12 +332,12 @@ export default function HomePage() {
         setPhoneError={setPhoneError}
         onReview={() => setStep("review")}
         onDelegate={() => setStep("delegate")}
-        onService={() => setStep("service")}
         onConfirm={handleConfirm}
         computedEndDate={autoEndDate}
         startDateObj={startDateObj}
         setStep={setStep}
         flowRef={flowRef}
+        normalizeDigits={normalizeDigits}
       />
 
       {success && (
@@ -471,6 +480,7 @@ function FlowCard({
   startDateObj,
   setStep,
   flowRef,
+  normalizeDigits,
 }: {
   step: Step;
   language: "ar" | "en";
@@ -499,7 +509,8 @@ function FlowCard({
   computedEndDate: string;
   startDateObj: Date;
   setStep: (step: Step) => void;
-  flowRef: React.RefObject<HTMLDivElement>;
+  flowRef: React.RefObject<HTMLDivElement | null>;
+  normalizeDigits: (v: string) => string;
 }) {
   return (
     <div ref={flowRef} className="card space-y-4 p-4">
@@ -638,9 +649,10 @@ function FlowCard({
                 <User2 className="h-4 w-4 text-[#1B8E5A]" />
                 <input
                   value={delegateId}
-                  onChange={(e) => setDelegateId(e.target.value)}
+                  onChange={(e) => setDelegateId(normalizeDigits(e.target.value))}
                   placeholder={language === "ar" ? "1234567890" : "+9665xxxxxxx"}
                   className="border-0 p-0 shadow-none focus:ring-0"
+                  inputMode="numeric"
                 />
               </div>
             </div>
@@ -650,13 +662,14 @@ function FlowCard({
                 <input
                   value={delegatePhone}
                   onChange={(e) => {
-                    const v = e.target.value;
+                    const v = normalizeDigits(e.target.value);
                     setDelegatePhone(v);
                     const valid = /^05\d{8}$/.test(v);
                     setPhoneError(valid || v.length === 0 ? "" : "الرجاء إدخال رقم جوال صحيح بصيغة 05xxxxxxxx");
                   }}
                   placeholder="05xxxxxxxx"
                   className="border-0 p-0 shadow-none focus:ring-0"
+                  inputMode="numeric"
                 />
               </div>
               {phoneError && <p className="mt-1 text-xs text-red-600">{phoneError}</p>}
@@ -681,7 +694,7 @@ function FlowCard({
                 setPhoneError("");
                 onReview();
               }}
-              disabled={!delegateId || !delegateName || !delegatePhone}
+              disabled={delegateId.length !== 10 || !delegateName || !delegatePhone}
             >
               {language === "ar" ? "مراجعة" : "Review"}
             </button>
