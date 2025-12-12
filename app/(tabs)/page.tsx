@@ -6,6 +6,7 @@ import { t } from "@/lib/i18n";
 import { cn, durationLabel, formatDate, platformLabel } from "@/lib/utils";
 import { useDelegationsStore } from "@/store/delegations";
 import { useSettingsStore } from "@/store/settings";
+import { useRouter } from "next/navigation";
 import {
   AlarmClockCheck,
   ArrowLeft,
@@ -39,6 +40,7 @@ const statusPills: Record<
 export default function HomePage() {
   const { createDelegation, delegations } = useDelegationsStore();
   const language = useSettingsStore((state) => state.language);
+  const router = useRouter();
 
   const [step, setStep] = useState<Step>("service");
   const [selectedPlatform, setSelectedPlatform] = useState<Platform>("absher");
@@ -111,6 +113,15 @@ export default function HomePage() {
     if (firstService) setSelectedService(firstService);
     setStep("service");
     // Smooth scroll to flow
+    if (flowRef.current) {
+      flowRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
+  const startNewDelegation = () => {
+    setStep("service");
+    const firstService = services.find((s) => s.platform === selectedPlatform) ?? services[0];
+    setSelectedService(firstService);
     if (flowRef.current) {
       flowRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -243,7 +254,7 @@ export default function HomePage() {
       </div>
 
 <button
-        onClick={() => setStep("service")}
+        onClick={startNewDelegation}
         className="flex w-full items-center justify-between rounded-2xl bg-gradient-to-r from-[#1B8E5A] to-[#156B45] px-4 py-3 text-white shadow-lg"
       >
         <div className="flex items-center gap-2 text-lg font-semibold">
@@ -259,7 +270,10 @@ export default function HomePage() {
         <h2 className="text-lg font-semibold text-slate-900">
           {language === "ar" ? "آخر التفويضات" : "Latest delegations"}
         </h2>
-        <button className="text-sm font-semibold text-[#1B8E5A]">
+        <button
+          onClick={() => router.push("/grantor")}
+          className="text-sm font-semibold text-[#1B8E5A] hover:underline"
+        >
           {language === "ar" ? "عرض الكل" : "View all"}
         </button>
       </div>

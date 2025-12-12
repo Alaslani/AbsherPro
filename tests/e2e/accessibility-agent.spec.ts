@@ -1,6 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, Page } from "@playwright/test";
 
-const openAccessibility = async (page: any) => {
+const openAccessibility = async (page: Page) => {
   await page.goto("/accessibility");
 };
 
